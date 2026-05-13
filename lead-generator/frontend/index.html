@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lead Generator Test Page</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+            background-color: #f4f4f9;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        .content {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        code {
+            background: #eee;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Welcome to Our Awesome Service</h1>
+        <p>This is a sample landing page to test the lead generator widget.</p>
+    </header>
+
+    <div class="content">
+        <h2>Why Choose Us?</h2>
+        <p>We provide the best solutions for your business needs. Our team is dedicated to helping you grow.</p>
+        <ul>
+            <li>High quality services</li>
+            <li>24/7 support</li>
+            <li>Affordable pricing</li>
+        </ul>
+        <p>Check out the widget in the bottom right corner!</p>
+    </div>
+
+    <!-- Widget Integration -->
+    <script>
+        // Optional: configure the API URL if different from default localhost:3000
+        window.LG_WIDGET_API_URL = 'http://localhost:3000/api/leads';
+    </script>
+    <script src="widget.js"></script>
+</body>
+</html>
