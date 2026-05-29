@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jokersluck | Creative Brand Identity & Web Development</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <div class="logo">
+                <a href="#hero">
+                    <img src="assets/images/logo-horizontal.png" alt="Jokersluck Logo" class="nav-logo">
+                </a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#hero">Home</a></li>
+                <li><a href="#services">Services</a></li>
+                <li><a href="#portfolio">Portfolio</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+            <div class="burger">
+                <div class="line1"></div>
+                <div class="line2"></div>
+                <div class="line3"></div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section id="hero" class="hero">
+            <div class="container hero-content">
+                <h1>One-Stop Creative Shop for Early-Stage Businesses</h1>
+                <p>Branded logos, eye-catching flyers, and responsive websites delivered without the agency price tag or runaround.</p>
+                <div class="hero-btns">
+                    <a href="#contact" class="btn btn-primary">Start Your Project</a>
+                    <a href="#services" class="btn btn-secondary">Our Services</a>
+                </div>
+            </div>
+        </section>
+
+        <section id="services" class="services">
+            <div class="container">
+                <h2 class="section-title">Our Services</h2>
+                <div class="services-grid">
+                    <div class="service-card">
+                        <div class="service-icon">🎨</div>
+                        <h3>Branded Logos</h3>
+                        <p>Unique, memorable logos that define your brand's personality and stand out from the competition.</p>
+                    </div>
+                    <div class="service-card">
+                        <div class="service-icon">📄</div>
+                        <h3>Eye-Catching Flyers</h3>
+                        <p>Professional print and digital flyers designed to grab attention and drive results for your events or promotions.</p>
+                    </div>
+                    <div class="service-card">
+                        <div class="service-icon">💻</div>
+                        <h3>Responsive Websites</h3>
+                        <p>Modern, mobile-friendly websites built to provide a seamless user experience across all devices.</p>
+                    </div>
+                    <div class="service-card">
+                        <div class="service-icon">🔄</div>
+                        <h3>Site Updates & Retainers</h3>
+                        <p>Ongoing maintenance and quick updates to keep your website fresh, secure, and performing at its best.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="portfolio" class="portfolio">
+            <div class="container">
+                <h2 class="section-title">Our Recent Work</h2>
+                <div class="portfolio-grid">
+                    <div class="portfolio-card">
+                        <div class="portfolio-img">
+                            <img src="assets/images/logo-square.png" alt="Logo Design Project">
+                        </div>
+                        <div class="portfolio-info">
+                            <h3>Brand Identity</h3>
+                            <p>Visual identity for Jokersluck Agency.</p>
+                        </div>
+                    </div>
+                    <div class="portfolio-card">
+                        <div class="portfolio-img-placeholder">
+                            <span>Web Design</span>
+                        </div>
+                        <div class="portfolio-info">
+                            <h3>Corporate Website</h3>
+                            <p>Clean and modern responsive site.</p>
+                        </div>
+                    </div>
+                    <div class="portfolio-card">
+                        <div class="portfolio-img-placeholder">
+                            <span>Print Design</span>
+                        </div>
+                        <div class="portfolio-info">
+                            <h3>Marketing Flyers</h3>
+                            <p>High-impact event promotion materials.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="cta" class="cta">
+            <div class="container">
+                <h2>Ready to elevate your brand?</h2>
+                <p>Let's build something amazing together. Fast turnaround, transparent pricing.</p>
+                <a href="#contact" class="btn btn-primary">Get a Free Quote</a>
+            </div>
+        </section>
+
+        <section id="contact" class="contact">
+            <div class="container">
+                <h2 class="section-title">Get In Touch</h2>
+                <div class="contact-container">
+                    <form id="contact-form">
+                        <div class="form-group">
+                            <label for="name">Name</label>
+                            <input type="text" id="name" name="name" required placeholder="Your Name">
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" required placeholder="Your Email">
+                        </div>
+                        <div class="form-group">
+                            <label for="message">Message</label>
+                            <textarea id="message" name="message" rows="5" required placeholder="Tell us about your project needs"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Send Message</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <img src="assets/images/logo-horizontal.png" alt="Jokersluck Logo" class="footer-logo-img">
+                </div>
+                <p>&copy; 2024 Jokersluck Creative Agency. All rights reserved.</p>
+                <div class="footer-tagline">Helping small businesses look like big ones.</div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
