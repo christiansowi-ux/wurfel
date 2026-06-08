@@ -6,15 +6,8 @@
  */
 
 // Base URL for the engine API
-// Uses full URL for local dev (engine on port 8000), relative for production (deploy.py on same origin)
-const API_BASE = (() => {
-  // If window is available and we're on localhost:5173 (Vite dev server), connect to engine on 8000
-  if (typeof window !== 'undefined' && window.location.hostname === 'localhost' && window.location.port === '5173') {
-    return 'http://localhost:8000/api/v1';
-  }
-  // Production: same origin (deploy.py serves both frontend and API)
-  return '/api/v1';
-})();
+// In production, use the deployed backend URL
+const API_BASE = import.meta.env.VITE_API_BASE || '/api/v1';
 
 // ---------------------------------------------------------------------------
 // Types matching the engine's Pydantic models
@@ -38,6 +31,10 @@ export interface ApiHyperFrame {
   duration: number;
   easing: 'linear' | 'ease-in' | 'ease-out' | 'ease-in-out' | 'bounce' | 'elastic';
   effect: 'none' | 'morph' | 'glitch' | 'blur' | 'zoom-blur' | 'shake' | 'fade' | 'crossfade';
+  text?: string;
+  font_size?: number;
+  text_color?: string;
+  text_position?: 'top' | 'center' | 'bottom' | 'custom';
 }
 
 export interface ApiMotionTemplate {
