@@ -1,0 +1,17 @@
+{
+  "name": "hyperforge-studio",
+  "services": [
+    {
+      "name": "engine",
+      "path": "./engine",
+      "run": "uvicorn main:app --host 0.0.0.0 --port 8000"
+    },
+    {
+      "name": "frontend",
+      "path": "./frontend",
+      "type": "static",
+      "build": "npm run build",
+      "outputDir": "dist"
+    }
+  ]
+}

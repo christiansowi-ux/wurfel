@@ -4,3 +4,5 @@ node_modules/
 *.db-journal
 .DS_Store
 .env
+engine/venv/
+__pycache__/
