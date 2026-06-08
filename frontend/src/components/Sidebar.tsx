@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useDashboardStore } from '../stores/dashboardStore';
 import type { NavigationTab } from '../types';
 
@@ -8,7 +9,31 @@ const navItems: { id: NavigationTab; label: string; icon: string }[] = [
 ];
 
 export default function Sidebar() {
-  const { activeTab, setActiveTab, isCodeView, toggleCodeView } = useDashboardStore();
+  const {
+    activeTab, setActiveTab,
+    isCodeView, toggleCodeView,
+    engineStatus, engineLoading,
+    checkEngineHealth,
+  } = useDashboardStore();
+
+  // Check engine health on mount and periodically
+  useEffect(() => {
+    checkEngineHealth();
+    const interval = setInterval(checkEngineHealth, 15000);
+    return () => clearInterval(interval);
+  }, [checkEngineHealth]);
+
+  const getStatusColor = () => {
+    if (engineLoading === 'loading') return 'var(--warning)';
+    if (engineStatus?.status === 'ok') return 'var(--success)';
+    return 'var(--danger)';
+  };
+
+  const getStatusText = () => {
+    if (engineLoading === 'loading') return 'Verbinde...';
+    if (engineStatus?.status === 'ok') return `Engine ${engineStatus.version}`;
+    return 'Offline';
+  };
 
   return (
     <aside
@@ -90,12 +115,29 @@ export default function Sidebar() {
           <span>Code-Ansicht</span>
         </button>
 
+        {/* Live Engine Status */}
         <div
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs"
-          style={{ color: 'var(--text-secondary)' }}
+          style={{
+            backgroundColor: 'var(--bg-tertiary)',
+            color: 'var(--text-secondary)',
+          }}
         >
-          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--success)' }} />
-          <span>System bereit</span>
+          <div
+            className="w-2 h-2 rounded-full"
+            style={{
+              backgroundColor: getStatusColor(),
+              animation: engineLoading === 'loading' ? 'pulse 1.5s infinite' : 'none',
+            }}
+          />
+          <div className="flex flex-col">
+            <span>{getStatusText()}</span>
+            {engineStatus?.status === 'ok' && (
+              <span className="text-[10px] opacity-60">
+                FFmpeg: {engineStatus.ffmpegAvailable ? '✓' : '✗'} | OpenCV: {engineStatus.opencvAvailable ? '✓' : '✗'}
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </aside>

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import Timeline from '../components/Timeline';
 import TemplatesGallery from '../components/TemplatesGallery';
@@ -6,7 +7,15 @@ import PreviewPanel from '../components/PreviewPanel';
 import { useDashboardStore } from '../stores/dashboardStore';
 
 export default function Dashboard() {
-  const { activeTab } = useDashboardStore();
+  const { activeTab, fetchTemplates, checkEngineHealth, templatesLoading } = useDashboardStore();
+
+  // Initial data load
+  useEffect(() => {
+    checkEngineHealth();
+    if (templatesLoading === 'idle') {
+      fetchTemplates();
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const renderMainContent = () => {
     switch (activeTab) {

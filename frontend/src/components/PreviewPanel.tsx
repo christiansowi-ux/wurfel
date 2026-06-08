@@ -67,7 +67,7 @@ export default function PreviewPanel() {
                     border: '1px solid var(--border-color)',
                   }}
                 >
-                  {JSON.stringify(selectedFrame.params, null, 2)}
+                  {JSON.stringify({ start: selectedFrame.start, end: selectedFrame.end, easing: selectedFrame.easing, effect: selectedFrame.effect }, null, 2)}
                 </pre>
               )}
             </div>

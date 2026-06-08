@@ -1,24 +1,112 @@
+import { useEffect } from 'react';
 import { useDashboardStore } from '../stores/dashboardStore';
 
 const categoryLabels: Record<string, string> = {
   transition: 'Transitions',
   zoom: 'Zooms',
   morph: 'Morphs',
-  'text-overlay': 'Text Overlays',
+  'text': 'Text Overlays',
   effect: 'Effects',
+  bounce: 'Bounce',
+  glitch: 'Glitch',
 };
 
 export default function TemplatesGallery() {
-  const { templates, setActiveProject, projects } = useDashboardStore();
+  const {
+    templates,
+    templatesLoading,
+    templatesError,
+    fetchTemplates,
+    projects,
+    setActiveProject,
+    fetchTemplateById,
+  } = useDashboardStore();
 
-  const categories = [...new Set(templates.map((t) => t.category))];
+  // Fetch templates from API on mount
+  useEffect(() => {
+    if (templatesLoading === 'idle') {
+      fetchTemplates();
+    }
+  }, [templatesLoading, fetchTemplates]);
 
-  const handleUseTemplate = (_templateId: string) => {
-    // Create a new project from template or switch to first project
+  const handleUseTemplate = async (templateId: string) => {
+    // If we have a project, switch to it
     if (projects.length > 0) {
       setActiveProject(projects[0].id);
     }
+    // In future: create new project from template
+    try {
+      const template = await fetchTemplateById(templateId);
+      if (template) {
+        console.log('Template loaded:', template.name);
+      }
+    } catch (err) {
+      console.error('Failed to load template:', err);
+    }
   };
+
+  // Loading state
+  if (templatesLoading === 'loading') {
+    return (
+      <div className="flex-1 flex items-center justify-center px-6 py-6">
+        <div className="text-center">
+          <div
+            className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-4 animate-pulse"
+            style={{ backgroundColor: 'rgba(108, 92, 231, 0.15)' }}
+          >
+            🎨
+          </div>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            Lade Templates von der Engine...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (templatesLoading === 'error') {
+    return (
+      <div className="flex-1 flex items-center justify-center px-6 py-6">
+        <div className="text-center max-w-md">
+          <div
+            className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-4"
+            style={{ backgroundColor: 'rgba(231, 76, 60, 0.15)' }}
+          >
+            ⚠️
+          </div>
+          <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
+            Verbindung zur Engine fehlgeschlagen
+          </h3>
+          <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+            {templatesError || 'Die Hyperframe Engine ist nicht erreichbar. Starte den Engine-Server auf Port 8000.'}
+          </p>
+          <button
+            onClick={() => fetchTemplates()}
+            className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+            style={{ backgroundColor: 'var(--accent)', color: '#fff' }}
+          >
+            Erneut versuchen
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const categories = [...new Set(templates.map((t) => t.category))];
+
+  // Empty state
+  if (templates.length === 0) {
+    return (
+      <div className="flex-1 flex items-center justify-center px-6 py-6">
+        <div className="text-center">
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            Keine Templates gefunden
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 overflow-y-auto px-6 py-6">
@@ -68,8 +156,10 @@ export default function TemplatesGallery() {
                       {template.category === 'transition' && '↔️'}
                       {template.category === 'zoom' && '🔍'}
                       {template.category === 'morph' && '🌀'}
-                      {template.category === 'text-overlay' && '📝'}
+                      {template.category === 'text' && '📝'}
                       {template.category === 'effect' && '✨'}
+                      {template.category === 'bounce' && '🏀'}
+                      {template.category === 'glitch' && '⚡'}
                     </div>
                     {template.isFree && (
                       <span
@@ -106,6 +196,9 @@ export default function TemplatesGallery() {
                     <div className="flex items-center justify-between">
                       <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
                         {template.hyperframes.length} Frames
+                        {template.tags.length > 0 && (
+                          <span className="ml-2 opacity-60">• {template.tags.slice(0, 2).join(', ')}</span>
+                        )}
                       </span>
                       <button
                         onClick={() => handleUseTemplate(template.id)}
