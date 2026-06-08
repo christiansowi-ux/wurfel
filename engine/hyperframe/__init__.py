@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Callable, Dict, Generator, List, Optional, Tuple
 
 import numpy as np
-from PIL import Image, ImageDraw, ImageFilter, ImageOps
+from PIL import Image, ImageDraw, ImageFilter, ImageOps, ImageFont
 
 from models.hyperframe import (
     EasingType,
@@ -305,6 +305,10 @@ def render_frame(
     effect: Optional[EffectType] = None,
     asset: Optional[Image.Image] = None,
     bg_color: str = "#14141E",
+    text: Optional[str] = None,
+    font_size: int = 48,
+    text_color: str = "#FFFFFF",
+    text_position: str = "bottom",
 ) -> Image.Image:
     """Render a single frame from a FrameState.
     
@@ -319,6 +323,10 @@ def render_frame(
         effect: Optional visual effect to apply.
         asset: Optional asset image to composite.
         bg_color: Background color hex string.
+        text: Optional caption text.
+        font_size: Font size.
+        text_color: Text color.
+        text_position: Text position.
     
     Returns:
         PIL Image of the rendered frame.
@@ -330,8 +338,41 @@ def render_frame(
     else:
         canvas = _generate_reference_content(state, width, height, effect)
     
-    # Apply effects last
+    # Apply effects
     canvas = _apply_effects(canvas, effect)
+    
+    # Render Text
+    if text:
+        draw = ImageDraw.Draw(canvas)
+        try:
+            # Try to load the font
+            font_path = "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf"
+            font = ImageFont.truetype(font_path, font_size)
+        except:
+            font = ImageFont.load_default()
+        
+        # Calculate text position
+        bbox = draw.textbbox((0, 0), text, font=font)
+        text_w = bbox[2] - bbox[0]
+        text_h = bbox[3] - bbox[1]
+        
+        if text_position == "top":
+            tx, ty = (width - text_w) // 2, 100
+        elif text_position == "center":
+            tx, ty = (width - text_w) // 2, (height - text_h) // 2
+        elif text_position == "custom":
+            tx, ty = (width - text_w) // 2, height - text_h - 150
+        else: # bottom
+            tx, ty = (width - text_w) // 2, height - text_h - 150
+            
+        # Draw outline for better readability
+        outline_color = (0, 0, 0)
+        draw.text((tx-2, ty-2), text, font=font, fill=outline_color)
+        draw.text((tx+2, ty-2), text, font=font, fill=outline_color)
+        draw.text((tx-2, ty+2), text, font=font, fill=outline_color)
+        draw.text((tx+2, ty+2), text, font=font, fill=outline_color)
+        
+        draw.text((tx, ty), text, fill=text_color, font=font)
     
     return canvas
 
@@ -446,40 +487,33 @@ class HyperframeEngine:
                 
                 for layer in sorted_layers:
                     # Find the hyperframe active at this time position
-                    state, effect = self._resolve_layer_state(layer, frame_idx, total_resolved)
+                    state, effect, text, fsize, tcolor, tpos = self._resolve_layer_state(layer, frame_idx, total_resolved)
                     asset = layer_assets.get(layer.asset_id)
                     
-                    if asset:
-                        layer_canvas = _composite_asset(asset, state, sequence.width, sequence.height, bg)
-                        canvas.paste(layer_canvas, (0, 0), layer_canvas)
-                    else:
-                        # Fallback: render reference content
-                        ref = _generate_reference_content(state, sequence.width, sequence.height)
-                        canvas.paste(ref, (0, 0), ref)
-                    
-                    # Apply effects per layer
-                    if effect:
-                        canvas = _apply_effects(canvas, effect)
+                    layer_canvas = render_frame(
+                        state, sequence.width, sequence.height, effect, asset, 
+                        sequence.background_color, text, fsize, tcolor, tpos
+                    )
+                    canvas.paste(layer_canvas, (0, 0), layer_canvas)
             
             # If no layers but has frames, use the frame-based approach
             if not sequence.layers and sequence.frames:
+                accumulated = 0
                 for hf in sequence.frames:
-                    t = (frame_idx % hf.duration) / max(hf.duration - 1, 1)
-                    state = interpolate_frame_state(hf.start, hf.end, t, hf.easing)
-                    
-                    asset = None
-                    if hf.asset_id:
-                        asset = load_asset(hf.asset_id)
-                    
-                    if asset:
-                        layer_canvas = _composite_asset(asset, state, sequence.width, sequence.height, bg)
+                    if accumulated + hf.duration > frame_idx:
+                        t = (frame_idx - accumulated) / max(hf.duration - 1, 1)
+                        state = interpolate_frame_state(hf.start, hf.end, t, hf.easing)
+                        
+                        asset = load_asset(hf.asset_id) if hf.asset_id else None
+                        effect = hf.effect if hf.effect != EffectType.NONE else None
+                        
+                        layer_canvas = render_frame(
+                            state, sequence.width, sequence.height, effect, asset,
+                            sequence.background_color, hf.text, hf.font_size, hf.text_color, hf.text_position
+                        )
                         canvas.paste(layer_canvas, (0, 0), layer_canvas)
-                    else:
-                        ref = _generate_reference_content(state, sequence.width, sequence.height)
-                        canvas.paste(ref, (0, 0), ref)
-                    
-                    if hf.effect != EffectType.NONE:
-                        canvas = _apply_effects(canvas, hf.effect)
+                        break
+                    accumulated += hf.duration
             
             frames.append(canvas)
             
@@ -501,10 +535,10 @@ class HyperframeEngine:
     
     def _resolve_layer_state(
         self, layer: CompositionLayer, global_frame_idx: int, total_frames: int
-    ) -> Tuple[FrameState, Optional[EffectType]]:
+    ) -> Tuple[FrameState, Optional[EffectType], Optional[str], int, str, str]:
         """Determine the FrameState for a layer at a given global frame index."""
         if not layer.hyperframes:
-            return FrameState(), None
+            return FrameState(), None, None, 48, "#FFFFFF", "bottom"
         
         # Find which hyperframe this frame belongs to
         accumulated = 0
@@ -513,12 +547,12 @@ class HyperframeEngine:
                 local_t = (global_frame_idx - accumulated) / max(hf.duration - 1, 1)
                 state = interpolate_frame_state(hf.start, hf.end, local_t, hf.easing)
                 effect = hf.effect if hf.effect != EffectType.NONE else None
-                return state, effect
+                return state, effect, hf.text, hf.font_size, hf.text_color, hf.text_position
             accumulated += hf.duration
         
         # Past the last frame, return end state of last frame
         last = layer.hyperframes[-1]
-        return last.end, (last.effect if last.effect != EffectType.NONE else None)
+        return last.end, (last.effect if last.effect != EffectType.NONE else None), last.text, last.font_size, last.text_color, last.text_position
     
     def estimate_duration(self, sequence: HyperFrameSequence) -> float:
         total_frames = self._count_frames(sequence)

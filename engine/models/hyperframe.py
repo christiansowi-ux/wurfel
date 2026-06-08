@@ -55,6 +55,12 @@ class HyperFrame(BaseModel):
     easing: EasingType = Field(default=EasingType.EASE_IN_OUT, description="Easing function")
     effect: EffectType = Field(default=EffectType.NONE, description="Visual effect to apply")
     asset_id: Optional[str] = Field(default=None, description="Reference to an uploaded asset to animate")
+    
+    # Text/Caption Fields
+    text: Optional[str] = Field(default=None, description="Caption text to render on frame")
+    font_size: int = Field(default=48, ge=8, le=200, description="Font size in pixels")
+    text_color: str = Field(default="#FFFFFF", description="Text color hex")
+    text_position: str = Field(default="bottom", description="Text position: top, center, bottom, custom")
 
 
 class CompositionLayer(BaseModel):
@@ -154,3 +160,8 @@ class HealthResponse(BaseModel):
     opencv_available: bool = Field(default=False, description="Whether OpenCV is available")
     assets_count: int = Field(default=0, description="Number of cached assets")
     frame_rate: Dict[str, Any] = Field(default_factory=dict, description="Frame rate capabilities")
+class CaptionRequest(BaseModel):
+    """Request body for POST /caption."""
+    text: str = Field(..., description="The text to generate captions for")
+    style: str = Field(default="default", description="Caption style: default, energetic, calm")
+    duration_per_word: float = Field(default=0.5, description="Duration in seconds per word")
