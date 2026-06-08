@@ -73,6 +73,7 @@ export interface DashboardState {
 
   // Templates (from API)
   templates: Template[];
+  templatesFallback: Template[];
   templatesLoading: LoadingState;
   templatesError: string | null;
   fetchTemplates: () => Promise<void>;

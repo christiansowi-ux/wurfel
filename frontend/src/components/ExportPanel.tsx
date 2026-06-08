@@ -1,20 +1,58 @@
 import { useState } from 'react';
 import { useDashboardStore } from '../stores/dashboardStore';
+import { generateVideo, type GenerateRequest } from '../services/api';
 
 type ExportQuality = 'draft' | 'standard' | 'high';
-type ExportFormat = 'mp4' | 'gif' | 'mov';
+type ExportFormat = 'mp4' | 'gif' | 'webm';
 
 export default function ExportPanel() {
-  const { projects, activeProjectId } = useDashboardStore();
+  const { projects, activeProjectId, setActiveProject } = useDashboardStore();
   const activeProject = projects.find((p) => p.id === activeProjectId);
 
   const [quality, setQuality] = useState<ExportQuality>('standard');
   const [format, setFormat] = useState<ExportFormat>('mp4');
   const [includeWatermark, setIncludeWatermark] = useState(true);
+  const [exporting, setExporting] = useState(false);
+  const [exportResult, setExportResult] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
 
-  const handleExport = () => {
-    // Placeholder for export logic
-    console.log('Exporting:', { project: activeProject?.name, quality, format, includeWatermark });
+  const handleExport = async () => {
+    if (!activeProject) return;
+
+    setExporting(true);
+    setExportResult(null);
+    setExportError(null);
+
+    try {
+      const crf = quality === 'draft' ? 35 : quality === 'standard' ? 23 : 18;
+      const req: GenerateRequest = {
+        sequence: {
+          id: activeProject.id,
+          frames: activeProject.hyperframes.map((hf) => ({
+            id: hf.id,
+            type: hf.type,
+            start: hf.start,
+            end: hf.end,
+            duration: Math.round(hf.duration * 30),
+            easing: hf.easing as GenerateRequest['sequence']['frames'][0]['easing'],
+            effect: hf.effect as GenerateRequest['sequence']['frames'][0]['effect'],
+          })),
+          width: 1080,
+          height: 1920,
+          fps: 30,
+        },
+        output_format: format,
+        quality: crf,
+      };
+
+      const result = await generateVideo(req);
+      setExportResult(result.video_url);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Export fehlgeschlagen';
+      setExportError(msg);
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
@@ -24,7 +62,7 @@ export default function ExportPanel() {
           Export
         </h2>
         <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-          Konfiguriere und exportiere dein Video
+          Konfiguriere und exportiere dein Video über die Hyperframe Engine
         </p>
       </div>
 
@@ -34,7 +72,7 @@ export default function ExportPanel() {
         style={{ backgroundColor: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }}
       >
         <label className="text-xs font-medium uppercase tracking-wider mb-2 block" style={{ color: 'var(--text-secondary)' }}>
-          Projekt
+          Projekt auswählen
         </label>
         <select
           className="w-full px-3 py-2.5 rounded-lg text-sm"
@@ -45,19 +83,24 @@ export default function ExportPanel() {
             outline: 'none',
           }}
           value={activeProjectId || ''}
-          onChange={(_e) => {
-            // set active project
-          }}
+          onChange={(e) => setActiveProject(e.target.value || null)}
         >
           <option value="" disabled>
             Projekt auswählen
           </option>
           {projects.map((p) => (
             <option key={p.id} value={p.id}>
-              {p.name} ({p.hyperframes.length} Frames)
+              {p.name} ({p.hyperframes.length} Frames,{' '}
+              {p.hyperframes.reduce((acc, hf) => acc + hf.duration, 0).toFixed(1)}s)
             </option>
           ))}
         </select>
+        {activeProject && (
+          <div className="mt-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
+            {activeProject.hyperframes.length} Hyperframes •{' '}
+            {activeProject.hyperframes.reduce((acc, hf) => acc + hf.duration, 0).toFixed(1)}s Gesamtdauer
+          </div>
+        )}
       </div>
 
       {/* Export Settings */}
@@ -66,7 +109,7 @@ export default function ExportPanel() {
         style={{ backgroundColor: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }}
       >
         <label className="text-xs font-medium uppercase tracking-wider mb-3 block" style={{ color: 'var(--text-secondary)' }}>
-          Qualität
+          Qualität (CRF: niedriger = besser)
         </label>
         <div className="flex gap-2">
           {(['draft', 'standard', 'high'] as ExportQuality[]).map((q) => (
@@ -80,9 +123,9 @@ export default function ExportPanel() {
                 border: `1px solid ${quality === q ? 'var(--accent)' : 'var(--border-color)'}`,
               }}
             >
-              {q === 'draft' && 'Entwurf'}
-              {q === 'standard' && 'Standard'}
-              {q === 'high' && 'Hoch'}
+              {q === 'draft' && 'Entwurf (CRF 35)'}
+              {q === 'standard' && 'Standard (CRF 23)'}
+              {q === 'high' && 'Hoch (CRF 18)'}
             </button>
           ))}
         </div>
@@ -92,7 +135,7 @@ export default function ExportPanel() {
             Format
           </label>
           <div className="flex gap-2">
-            {(['mp4', 'mov', 'gif'] as ExportFormat[]).map((f) => (
+            {(['mp4', 'webm', 'gif'] as ExportFormat[]).map((f) => (
               <button
                 key={f}
                 onClick={() => setFormat(f)}
@@ -142,17 +185,37 @@ export default function ExportPanel() {
 
         <button
           onClick={handleExport}
-          disabled={!activeProject}
+          disabled={!activeProject || exporting}
           className="w-full px-4 py-3 rounded-xl text-sm font-bold transition-all"
           style={{
             backgroundColor: activeProject ? 'var(--accent)' : 'var(--bg-primary)',
             color: activeProject ? '#fff' : 'var(--text-secondary)',
-            opacity: activeProject ? 1 : 0.5,
-            cursor: activeProject ? 'pointer' : 'not-allowed',
+            opacity: activeProject ? (exporting ? 0.7 : 1) : 0.5,
+            cursor: activeProject ? (exporting ? 'wait' : 'pointer') : 'not-allowed',
           }}
         >
-          {activeProject ? 'Video exportieren' : 'Projekt auswählen'}
+          {exporting
+            ? 'Exportiere...'
+            : activeProject
+              ? 'Video exportieren'
+              : 'Projekt auswählen'}
         </button>
+
+        {/* Result */}
+        {exportResult && (
+          <div className="mt-3 p-3 rounded-lg text-xs" style={{ backgroundColor: 'rgba(0, 206, 201, 0.1)', color: 'var(--success)' }}>
+            ✅ Video exportiert!{' '}
+            <a href={exportResult} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline', color: 'var(--accent)' }}>
+              Download
+            </a>
+          </div>
+        )}
+
+        {exportError && (
+          <div className="mt-3 p-3 rounded-lg text-xs" style={{ backgroundColor: 'rgba(231, 76, 60, 0.1)', color: 'var(--danger)' }}>
+            ❌ {exportError}
+          </div>
+        )}
       </div>
     </div>
   );

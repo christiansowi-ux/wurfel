@@ -19,7 +19,7 @@ export default function TemplatesGallery() {
     fetchTemplates,
     projects,
     setActiveProject,
-    fetchTemplateById,
+    templatesFallback,
   } = useDashboardStore();
 
   // Fetch templates from API on mount
@@ -29,21 +29,18 @@ export default function TemplatesGallery() {
     }
   }, [templatesLoading, fetchTemplates]);
 
-  const handleUseTemplate = async (templateId: string) => {
-    // If we have a project, switch to it
+  const handleUseTemplate = async (_templateId: string) => {
     if (projects.length > 0) {
       setActiveProject(projects[0].id);
     }
-    // In future: create new project from template
-    try {
-      const template = await fetchTemplateById(templateId);
-      if (template) {
-        console.log('Template loaded:', template.name);
-      }
-    } catch (err) {
-      console.error('Failed to load template:', err);
-    }
   };
+
+  // Use fallback templates if API failed
+  const displayTemplates = templatesLoading === 'error' && templatesFallback.length > 0
+    ? templatesFallback
+    : templates;
+
+  const categories = [...new Set(displayTemplates.map((t) => t.category))];
 
   // Loading state
   if (templatesLoading === 'loading') {
@@ -64,8 +61,8 @@ export default function TemplatesGallery() {
     );
   }
 
-  // Error state
-  if (templatesLoading === 'error') {
+  // Empty state (no API data and no fallbacks)
+  if (displayTemplates.length === 0 && templatesLoading === 'error') {
     return (
       <div className="flex-1 flex items-center justify-center px-6 py-6">
         <div className="text-center max-w-md">
@@ -78,8 +75,11 @@ export default function TemplatesGallery() {
           <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
             Verbindung zur Engine fehlgeschlagen
           </h3>
-          <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
-            {templatesError || 'Die Hyperframe Engine ist nicht erreichbar. Starte den Engine-Server auf Port 8000.'}
+          <p className="text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>
+            {templatesError || 'Die Hyperframe Engine ist nicht erreichbar.'}
+          </p>
+          <p className="text-xs mb-4" style={{ color: 'var(--text-secondary)' }}>
+            Stelle sicher, dass der Engine-Server auf Port 8000 läuft.
           </p>
           <button
             onClick={() => fetchTemplates()}
@@ -93,10 +93,7 @@ export default function TemplatesGallery() {
     );
   }
 
-  const categories = [...new Set(templates.map((t) => t.category))];
-
-  // Empty state
-  if (templates.length === 0) {
+  if (displayTemplates.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center px-6 py-6">
         <div className="text-center">
@@ -111,12 +108,30 @@ export default function TemplatesGallery() {
   return (
     <div className="flex-1 overflow-y-auto px-6 py-6">
       <div className="mb-6">
-        <h2 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
-          Hyperframe Templates
-        </h2>
-        <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-          Kuratierte Motion-Animationen – bereit für dein nächstes TikTok-Video
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
+              Hyperframe Templates
+            </h2>
+            <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+              Kuratierte Motion-Animationen – bereit für dein nächstes TikTok-Video
+            </p>
+          </div>
+          {templatesLoading === 'error' && templatesFallback.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] px-2 py-1 rounded-full" style={{ backgroundColor: 'rgba(253, 203, 110, 0.15)', color: 'var(--warning)' }}>
+                Offline-Modus
+              </span>
+              <button
+                onClick={() => fetchTemplates()}
+                className="text-[10px] px-2 py-1 rounded-full transition-all"
+                style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}
+              >
+                Neu laden
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {categories.map((category) => (
@@ -128,7 +143,7 @@ export default function TemplatesGallery() {
             {categoryLabels[category] || category}
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {templates
+            {displayTemplates
               .filter((t) => t.category === category)
               .map((template) => (
                 <div
@@ -161,28 +176,20 @@ export default function TemplatesGallery() {
                       {template.category === 'bounce' && '🏀'}
                       {template.category === 'glitch' && '⚡'}
                     </div>
-                    {template.isFree && (
-                      <span
-                        className="absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider"
-                        style={{
-                          backgroundColor: 'rgba(0, 206, 201, 0.15)',
-                          color: 'var(--success)',
-                        }}
-                      >
-                        Free
-                      </span>
-                    )}
-                    {!template.isFree && (
-                      <span
-                        className="absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider"
-                        style={{
-                          backgroundColor: 'rgba(108, 92, 231, 0.15)',
-                          color: 'var(--accent)',
-                        }}
-                      >
-                        Pro
-                      </span>
-                    )}
+                    <span
+                      className={`absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                        template.isFree ? 'bg-emerald-500/15 text-emerald-400' : 'bg-purple-500/15 text-purple-400'
+                      }`}
+                    >
+                      {template.isFree ? 'Free' : 'Pro'}
+                    </span>
+                    {/* Frame count badge */}
+                    <span
+                      className="absolute bottom-2 left-2 text-[9px] px-1.5 py-0.5 rounded-full"
+                      style={{ backgroundColor: 'rgba(0,0,0,0.5)', color: 'var(--text-secondary)' }}
+                    >
+                      {template.hyperframes.length} Frame{template.hyperframes.length !== 1 ? 's' : ''}
+                    </span>
                   </div>
 
                   {/* Info */}
@@ -194,11 +201,8 @@ export default function TemplatesGallery() {
                       {template.description}
                     </p>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                        {template.hyperframes.length} Frames
-                        {template.tags.length > 0 && (
-                          <span className="ml-2 opacity-60">• {template.tags.slice(0, 2).join(', ')}</span>
-                        )}
+                      <span className="text-[10px] opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                        {template.tags?.slice(0, 3).join(' • ') || ''}
                       </span>
                       <button
                         onClick={() => handleUseTemplate(template.id)}

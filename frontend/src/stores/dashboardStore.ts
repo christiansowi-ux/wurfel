@@ -81,6 +81,69 @@ const sampleProjects: Project[] = [
   },
 ];
 
+const sampleTemplates: Template[] = [
+  {
+    id: 'sample-smooth-zoom',
+    name: 'Smooth Zoom',
+    description: 'Langsamer, flüssiger Zoom-In-Effekt. Perfekt für Produkt-Highlights und Intros.',
+    category: 'zoom',
+    thumbnail: '',
+    hyperframes: [sampleHyperframes[0]],
+    isFree: true,
+    tags: ['zoom', 'smooth', 'cinematic'],
+  },
+  {
+    id: 'sample-glide',
+    name: 'Glide Transition',
+    description: 'Seitlicher Gleit-Übergang mit sanftem Ein- und Ausschwingen.',
+    category: 'transition',
+    thumbnail: '',
+    hyperframes: [sampleHyperframes[1]],
+    isFree: true,
+    tags: ['glide', 'slide', 'smooth'],
+  },
+  {
+    id: 'sample-morph',
+    name: 'Morph',
+    description: 'Weicher Form-Wechsel zwischen zwei Elementen mit Überblendung.',
+    category: 'morph',
+    thumbnail: '',
+    hyperframes: [sampleHyperframes[3]],
+    isFree: false,
+    tags: ['morph', 'blend', 'transform'],
+  },
+  {
+    id: 'sample-bounce',
+    name: 'Bounce',
+    description: 'Federnder Bounce-Effekt mit elastischem Overshoot.',
+    category: 'bounce',
+    thumbnail: '',
+    hyperframes: [sampleHyperframes[2]],
+    isFree: true,
+    tags: ['bounce', 'spring', 'playful'],
+  },
+  {
+    id: 'sample-text-slide',
+    name: 'Text Slide Up',
+    description: 'Text-Overlay gleitet flüssig von unten herein. Ideal für Captions und Titles.',
+    category: 'text',
+    thumbnail: '',
+    hyperframes: [sampleHyperframes[4]],
+    isFree: false,
+    tags: ['text', 'slide', 'caption'],
+  },
+  {
+    id: 'sample-glitch',
+    name: 'Glitch',
+    description: 'Digitaler Glitch-Effekt mit Störungen und Versatz. Für Gaming- & Tech-Content.',
+    category: 'glitch',
+    thumbnail: '',
+    hyperframes: [sampleHyperframes[0], sampleHyperframes[2]],
+    isFree: true,
+    tags: ['glitch', 'digital', 'cyber'],
+  },
+];
+
 // ---------------------------------------------------------------------------
 // Store
 // ---------------------------------------------------------------------------
@@ -183,6 +246,7 @@ export const useDashboardStore = create<DashboardState>((set) => ({
 
   // ---- Templates (from API) ----
   templates: [],
+  templatesFallback: sampleTemplates,
   templatesLoading: 'idle',
   templatesError: null,
 
