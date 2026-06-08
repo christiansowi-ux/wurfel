@@ -336,30 +336,27 @@ async def preview_frame(request: PreviewRequest):
 
 
 @router.post("/caption")
-async def generate_captions(request: CaptionRequest):
-    """Generate a list of hyperframes with captions from text."""
-    words = request.text.split()
-    frames = []
+async def render_caption(request: CaptionRequest):
+    """Render text on a specific frame state and return the image."""
+    from io import BytesIO
     
-    for i, word in enumerate(words):
-        duration = int(request.duration_per_word * 30) # assume 30 fps
-        hf = HyperFrame(
-            id=f"cap-{i}",
-            text=word,
-            duration=duration,
-            font_size=64 if request.style == "energetic" else 48,
-            text_color="#FFFF00" if request.style == "energetic" else "#FFFFFF",
-            text_position="bottom"
-        )
-        # Add some animation if energetic
-        if request.style == "energetic":
-            hf.start.scale = 0.8
-            hf.end.scale = 1.2
-            hf.easing = EasingType.BOUNCE
-            
-        frames.append(hf)
-        
-    return {"frames": frames}
+    hf = request.frame
+    state = interpolate_frame_state(hf.start, hf.end, request.t, hf.easing)
+    
+    # Render the frame with the provided text overriding any text in the hf object
+    img = render_frame(
+        state, 1080, 1920, hf.effect,
+        text=request.text, 
+        font_size=hf.font_size, 
+        text_color=hf.text_color, 
+        text_position=hf.text_position
+    )
+    
+    buf = BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+    
+    return StreamingResponse(buf, media_type="image/png")
 
 
 @router.get("/preview/{export_id}")

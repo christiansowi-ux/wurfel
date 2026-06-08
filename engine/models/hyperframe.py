@@ -162,6 +162,6 @@ class HealthResponse(BaseModel):
     frame_rate: Dict[str, Any] = Field(default_factory=dict, description="Frame rate capabilities")
 class CaptionRequest(BaseModel):
     """Request body for POST /caption."""
-    text: str = Field(..., description="The text to generate captions for")
-    style: str = Field(default="default", description="Caption style: default, energetic, calm")
-    duration_per_word: float = Field(default=0.5, description="Duration in seconds per word")
+    frame: HyperFrame = Field(..., description="The frame to render text on")
+    text: str = Field(..., description="The caption text")
+    t: float = Field(default=0.0, description="Time position within frame")
