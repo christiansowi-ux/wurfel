@@ -1,11 +1,7 @@
 """HyperFrame - Pydantic data models for the Hyperframe Engine.
 
-Defines the JSON data types for Hyperframes:
-- FrameState: position, rotation, scale, opacity, color
-- HyperFrame: a single keyframe definition
-- HyperFrameSequence: a sequence of keyframes
-- MotionTemplate: predefined motion profile
-- GenerationRequest/Response: API contract types
+Defines the JSON data types for Hyperframes, asset management,
+and composition layers for real video compositing.
 """
 
 from __future__ import annotations
@@ -58,6 +54,15 @@ class HyperFrame(BaseModel):
     duration: int = Field(default=30, ge=1, le=300, description="Duration in frames")
     easing: EasingType = Field(default=EasingType.EASE_IN_OUT, description="Easing function")
     effect: EffectType = Field(default=EffectType.NONE, description="Visual effect to apply")
+    asset_id: Optional[str] = Field(default=None, description="Reference to an uploaded asset to animate")
+
+
+class CompositionLayer(BaseModel):
+    """A layer in the video composition with an asset and hyperframe animation."""
+    asset_id: str = Field(..., description="Asset ID (image/video) to use for this layer")
+    hyperframes: List[HyperFrame] = Field(default_factory=list, description="Hyperframes animating this layer")
+    z_index: int = Field(default=0, description="Layer order (higher = on top)")
+    blend_mode: str = Field(default="normal", description="Blend mode: normal, multiply, screen, overlay")
 
 
 class HyperFrameSequence(BaseModel):
@@ -67,6 +72,8 @@ class HyperFrameSequence(BaseModel):
     width: int = Field(default=1080, ge=1, description="Canvas width in pixels")
     height: int = Field(default=1920, ge=1, description="Canvas height in pixels")
     fps: int = Field(default=30, ge=1, le=120, description="Frames per second")
+    layers: List[CompositionLayer] = Field(default_factory=list, description="Composition layers with asset references")
+    background_color: str = Field(default="#14141E", description="Background color hex")
 
 
 class MotionTemplate(BaseModel):
@@ -80,6 +87,25 @@ class MotionTemplate(BaseModel):
     thumbnail_url: Optional[str] = Field(default=None, description="URL to preview thumbnail")
 
 
+# --- Asset Models ---
+
+class AssetInfo(BaseModel):
+    """Information about an uploaded asset."""
+    id: str = Field(..., description="Unique asset identifier")
+    filename: str = Field(..., description="Original filename")
+    mime_type: str = Field(..., description="MIME type (image/png, video/mp4, etc.)")
+    width: int = Field(..., description="Width in pixels")
+    height: int = Field(..., description="Height in pixels")
+    file_size: int = Field(..., description="File size in bytes")
+    duration_frames: Optional[int] = Field(default=None, description="Duration in frames (for videos)")
+
+
+class UploadResponse(BaseModel):
+    """Response after asset upload."""
+    asset: AssetInfo = Field(..., description="Uploaded asset info")
+    url: str = Field(..., description="URL to access the asset")
+
+
 # --- API Models ---
 
 class GenerateRequest(BaseModel):
@@ -88,6 +114,7 @@ class GenerateRequest(BaseModel):
     template_id: Optional[str] = Field(default=None, description="Optional template ID to apply as base")
     output_format: str = Field(default="mp4", pattern="^(mp4|gif|webm)$", description="Output video format")
     quality: int = Field(default=23, ge=0, le=51, description="Video quality (lower = better, 0-51 for libx264 CRF)")
+    interpolation_factor: float = Field(default=2.0, ge=1.0, le=10.0, description="Frame interpolation multiplier")
 
 
 class GenerateResponse(BaseModel):
@@ -98,12 +125,25 @@ class GenerateResponse(BaseModel):
     total_frames: int = Field(..., description="Total number of frames generated")
     generation_time_ms: float = Field(..., description="Generation time in milliseconds")
     hyperframes_used: int = Field(..., description="Number of hyperframes in the sequence")
+    export_id: str = Field(..., description="Export ID for progress tracking and download")
+    progress_url: str = Field(default="", description="URL to poll for generation progress")
 
 
 class PreviewRequest(BaseModel):
     """Request body for POST /preview (lightweight, single frame)."""
     frame: HyperFrame = Field(..., description="Single hyperframe to preview")
     t: float = Field(default=0.5, ge=0.0, le=1.0, description="Normalized time position (0-1)")
+    asset_id: Optional[str] = Field(default=None, description="Asset to preview with the frame")
+
+
+class GenerateProgress(BaseModel):
+    """Progress information for a generation job."""
+    export_id: str = Field(..., description="Export ID")
+    status: str = Field(..., description="Status: processing, completed, failed")
+    progress: float = Field(default=0.0, ge=0.0, le=1.0, description="Progress from 0 to 1")
+    current_frame: int = Field(default=0, description="Currently rendered frame")
+    total_frames: int = Field(default=0, description="Total frames to render")
+    message: str = Field(default="", description="Status message")
 
 
 class HealthResponse(BaseModel):
@@ -112,4 +152,5 @@ class HealthResponse(BaseModel):
     version: str = Field(default="0.1.0", description="Engine version")
     ffmpeg_available: bool = Field(default=False, description="Whether FFmpeg is installed")
     opencv_available: bool = Field(default=False, description="Whether OpenCV is available")
+    assets_count: int = Field(default=0, description="Number of cached assets")
     frame_rate: Dict[str, Any] = Field(default_factory=dict, description="Frame rate capabilities")
