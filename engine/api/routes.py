@@ -96,8 +96,8 @@ async def health():
         version="0.1.0",
         ffmpeg_available=_check_ffmpeg(),
         opencv_available=_check_opencv(),
-        assets_count=len(os.listdir(Path(os.path.expanduser("~")) / ".hyperforge" / "assets")) 
-            if Path(os.path.expanduser("~") / ".hyperforge" / "assets").exists() else 0,
+        assets_count=len(os.listdir(Path.home() / ".hyperforge" / "assets")) 
+            if (Path.home() / ".hyperforge" / "assets").exists() else 0,
         frame_rate={
             "supported_fps": [24, 25, 30, 60],
             "max_resolution": "1080x1920",
