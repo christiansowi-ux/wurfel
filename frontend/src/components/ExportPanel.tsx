@@ -45,7 +45,7 @@ export default function ExportPanel() {
             outline: 'none',
           }}
           value={activeProjectId || ''}
-          onChange={(e) => {
+          onChange={(_e) => {
             // set active project
           }}
         >

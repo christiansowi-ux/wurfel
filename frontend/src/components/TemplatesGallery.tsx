@@ -13,7 +13,7 @@ export default function TemplatesGallery() {
 
   const categories = [...new Set(templates.map((t) => t.category))];
 
-  const handleUseTemplate = (templateId: string) => {
+  const handleUseTemplate = (_templateId: string) => {
     // Create a new project from template or switch to first project
     if (projects.length > 0) {
       setActiveProject(projects[0].id);

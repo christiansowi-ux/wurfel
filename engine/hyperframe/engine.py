@@ -1,0 +1,1 @@
+"""HyperFrame Engine — core interpolation and rendering logic."""

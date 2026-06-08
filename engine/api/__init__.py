@@ -1,0 +1,1 @@
+"""API subpackage — REST endpoints for the Hyperframe Engine."""
