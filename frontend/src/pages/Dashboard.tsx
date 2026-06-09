@@ -31,12 +31,16 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full w-full relative overflow-hidden">
+      {/* Background decoration elements */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-accent/20 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-purple-500/10 blur-[100px] rounded-full pointer-events-none" />
+
       {/* Sidebar */}
       <Sidebar />
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      <main className="flex-1 flex flex-col relative z-10 overflow-hidden">
         {renderMainContent()}
       </main>
 

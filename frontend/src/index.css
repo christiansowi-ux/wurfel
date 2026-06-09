@@ -3,18 +3,20 @@
 :root {
   --sidebar-width: 260px;
   --preview-width: 400px;
-  --bg-primary: #0f0f13;
-  --bg-secondary: #1a1a23;
-  --bg-tertiary: #242434;
-  --border-color: #2e2e42;
-  --text-primary: #f0f0f5;
-  --text-secondary: #8888a3;
+  --bg-primary: #0a0a0f;
+  --bg-secondary: rgba(20, 20, 31, 0.7);
+  --bg-tertiary: rgba(30, 30, 45, 0.6);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --text-primary: #ffffff;
+  --text-secondary: #94a3b8;
   --accent: #6c5ce7;
-  --accent-hover: #7b6ff0;
-  --accent-glow: rgba(108, 92, 231, 0.25);
+  --accent-hover: #8172f3;
+  --accent-glow: rgba(108, 92, 231, 0.4);
+  --glass-bg: rgba(15, 15, 25, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.1);
   --success: #00cec9;
   --warning: #fdcb6e;
-  --danger: #e74c3c;
+  --danger: #ff7675;
 }
 
 * {
@@ -23,9 +25,17 @@
   box-sizing: border-box;
 }
 
+@keyframes mesh-gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background-color: var(--bg-primary);
+  background: radial-gradient(circle at top left, #1a1a2e, #0a0a0f);
+  background-size: 200% 200%;
+  animation: mesh-gradient 15s ease infinite;
   color: var(--text-primary);
   overflow: hidden;
   height: 100vh;
@@ -34,6 +44,54 @@ body {
 #root {
   height: 100vh;
   width: 100vw;
+}
+
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+}
+
+.glow-hover:hover {
+  box-shadow: 0 0 20px var(--accent-glow);
+  border-color: var(--accent);
+}
+
+.premium-button {
+  background: linear-gradient(135deg, var(--accent), #a29bfe);
+  border: none;
+  box-shadow: 0 4px 15px var(--accent-glow);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.premium-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px var(--accent-glow);
+  filter: brightness(1.1);
+}
+
+.premium-card {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  backdrop-filter: blur(8px);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.premium-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), 0 0 15px var(--accent-glow);
+}
+
+.pro-badge {
+  background: linear-gradient(135deg, #f1c40f, #f39c12);
+  color: #000;
+  font-weight: 800;
+  box-shadow: 0 0 10px rgba(241, 196, 15, 0.4);
 }
 
 /* Scrollbar styling */

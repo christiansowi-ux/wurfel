@@ -1,7 +1,9 @@
 """FastAPI application configuration and setup."""
 
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from fastapi import FastAPI
+from pathlib import Path
 
 
 def create_app() -> FastAPI:
@@ -22,5 +24,10 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Serve static thumbnails
+    thumbnails_path = Path(__file__).parent.parent / "assets" / "thumbnails"
+    if thumbnails_path.exists():
+        app.mount("/thumbnails", StaticFiles(directory=str(thumbnails_path)), name="thumbnails")
 
     return app

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useDashboardStore } from '../stores/dashboardStore';
 import type { FrameState } from '../types';
 
@@ -23,10 +23,15 @@ function SliderField({
 }) {
   const id = `slider-${label.replace(/\s+/g, '-')}`;
   return (
-    <div className="flex items-center gap-2">
-      <label htmlFor={id} className="text-[10px] w-12 shrink-0" style={{ color: 'var(--text-secondary)' }}>
-        {label}
-      </label>
+    <div className="flex flex-col gap-2 p-3 rounded-2xl bg-white/5 border border-white/5 hover:border-white/10 transition-colors">
+      <div className="flex items-center justify-between">
+        <label htmlFor={id} className="text-[10px] font-black uppercase tracking-widest text-text-secondary">
+            {label}
+        </label>
+        <span className="text-[10px] font-mono font-bold text-accent">
+            {value.toFixed(step < 0.1 ? 2 : step < 1 ? 1 : 0)}
+        </span>
+      </div>
       <input
         id={id}
         type="range"
@@ -35,49 +40,8 @@ function SliderField({
         step={step}
         value={value}
         onChange={(e) => onChange(parseFloat(e.target.value))}
-        className="flex-1 h-1 rounded-full appearance-none cursor-pointer"
-        style={{
-          accentColor: 'var(--accent)',
-          backgroundColor: 'var(--border-color)',
-        }}
+        className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-white/10 accent-accent"
       />
-      <span className="text-[10px] w-10 text-right font-mono" style={{ color: 'var(--text-primary)' }}>
-        {value.toFixed(step < 0.1 ? 2 : step < 1 ? 1 : 0)}
-      </span>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// State editor for a single FrameState (start or end)
-// ---------------------------------------------------------------------------
-
-function FrameStateEditor({
-  label,
-  state,
-  onChange,
-}: {
-  label: string;
-  state: FrameState;
-  onChange: (s: FrameState) => void;
-}) {
-  const set = (key: keyof FrameState) => (val: number) => {
-    onChange({ ...state, [key]: key === 'opacity' || key === 'scale' || key === 'blur' ? val : Math.round(val) });
-  };
-
-  return (
-    <div className="mb-3">
-      <h5 className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--accent)' }}>
-        {label}
-      </h5>
-      <div className="space-y-1.5">
-        <SliderField label="X" value={state.x} min={-500} max={500} step={1} onChange={set('x')} />
-        <SliderField label="Y" value={state.y} min={-500} max={500} step={1} onChange={set('y')} />
-        <SliderField label="Scale" value={state.scale} min={0.1} max={5} step={0.1} onChange={set('scale')} />
-        <SliderField label="Rotate" value={state.rotation} min={-180} max={180} step={1} onChange={set('rotation')} />
-        <SliderField label="Opacity" value={state.opacity} min={0} max={1} step={0.05} onChange={set('opacity')} />
-        <SliderField label="Blur" value={state.blur} min={0} max={20} step={0.5} onChange={set('blur')} />
-      </div>
     </div>
   );
 }
@@ -85,6 +49,8 @@ function FrameStateEditor({
 // ---------------------------------------------------------------------------
 // Inspector Panel — shows when a Hyperframe is selected
 // ---------------------------------------------------------------------------
+
+type InspectorTab = 'general' | 'transform' | 'effects' | 'code';
 
 export default function HyperframeInspector() {
   const {
@@ -96,6 +62,8 @@ export default function HyperframeInspector() {
     duplicateHyperframe,
     isCodeView,
   } = useDashboardStore();
+
+  const [activeTab, setActiveTab] = useState<InspectorTab>('general');
 
   const project = projects.find((p) => p.id === activeProjectId);
   const hf = project?.hyperframes.find((f) => f.id === selectedHyperframeId);
@@ -109,138 +77,211 @@ export default function HyperframeInspector() {
     [project.id, hf.id, updateHyperframe],
   );
 
+  const updateState = (key: 'start' | 'end', field: keyof FrameState, val: any) => {
+    const newState = { ...hf[key], [field]: val };
+    update({ [key]: newState });
+  };
+
+  const tabs: { id: InspectorTab; label: string }[] = [
+    { id: 'general', label: 'General' },
+    { id: 'transform', label: 'Transform' },
+    { id: 'effects', label: 'Effects' },
+    { id: 'code', label: 'Source' },
+  ];
+
   return (
-    <div
-      className="border-t overflow-y-auto"
-      style={{
-        borderColor: 'var(--border-color)',
-        backgroundColor: 'var(--bg-primary)',
-        maxHeight: '45vh',
-      }}
-    >
-      <div className="px-6 py-3">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-              {hf.label}
-            </span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>
-              {hf.id}
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
+    <div className="border-t border-white/5 bg-bg-primary/90 backdrop-blur-2xl overflow-hidden flex flex-col h-[50vh]">
+      {/* Tabs Header */}
+      <div className="flex items-center justify-between px-8 py-4 border-b border-white/5">
+        <div className="flex gap-6">
+          {tabs.map(tab => (
+            <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`text-[10px] font-black uppercase tracking-[0.2em] transition-all relative py-2 ${
+                    activeTab === tab.id ? 'text-accent' : 'text-text-secondary hover:text-white'
+                }`}
+            >
+                {tab.label}
+                {activeTab === tab.id && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent shadow-[0_0_10px_var(--accent-glow)]" />
+                )}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-2">
             <button
               onClick={() => duplicateHyperframe(project.id, hf.id)}
-              className="px-2 py-1 text-[10px] rounded transition-all"
-              style={{ color: 'var(--text-secondary)', backgroundColor: 'var(--bg-tertiary)' }}
-              title="Duplizieren"
+              className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-xs hover:bg-white/10 transition-colors"
+              title="Duplicate"
             >
               📋
             </button>
             <button
               onClick={() => removeHyperframe(project.id, hf.id)}
-              className="px-2 py-1 text-[10px] rounded transition-all"
-              style={{ color: 'var(--danger)', backgroundColor: 'rgba(231, 76, 60, 0.1)' }}
-              title="Löschen"
+              className="w-8 h-8 rounded-xl bg-danger/10 border border-danger/20 flex items-center justify-center text-xs text-danger hover:bg-danger/20 transition-colors"
+              title="Delete"
             >
               🗑️
             </button>
+        </div>
+      </div>
+
+      {/* Tab Content */}
+      <div className="flex-1 overflow-y-auto px-8 py-6">
+        {activeTab === 'general' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <section className="space-y-6">
+                <h4 className="text-[11px] font-black text-white/40 uppercase tracking-widest border-b border-white/5 pb-2">Properties</h4>
+                <div className="space-y-4">
+                    <div>
+                        <label className="text-[10px] font-bold text-text-secondary uppercase tracking-wider block mb-2">Label</label>
+                        <input
+                            className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/5 focus:border-accent transition-all text-xs font-bold text-white outline-none"
+                            value={hf.label}
+                            onChange={(e) => update({ label: e.target.value })}
+                        />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-[10px] font-bold text-text-secondary uppercase tracking-wider block mb-2">Duration (s)</label>
+                            <input
+                                type="number"
+                                step="0.1"
+                                className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/5 focus:border-accent transition-all text-xs font-bold text-white outline-none"
+                                value={hf.duration}
+                                onChange={(e) => update({ duration: parseFloat(e.target.value) || 0.1 })}
+                            />
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-bold text-text-secondary uppercase tracking-wider block mb-2">Easing</label>
+                            <select
+                                className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/5 focus:border-accent transition-all text-xs font-bold text-white outline-none appearance-none"
+                                value={hf.easing}
+                                onChange={(e) => update({ easing: e.target.value })}
+                            >
+                                <option value="linear">Linear</option>
+                                <option value="ease-in">Ease In</option>
+                                <option value="ease-out">Ease Out</option>
+                                <option value="ease-in-out">Ease In Out</option>
+                                <option value="bounce">Bounce</option>
+                                <option value="elastic">Elastic</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section className="space-y-6">
+                <h4 className="text-[11px] font-black text-white/40 uppercase tracking-widest border-b border-white/5 pb-2">Text Overlay</h4>
+                <div className="space-y-4">
+                    <div>
+                        <label className="text-[10px] font-bold text-text-secondary uppercase tracking-wider block mb-2">Caption Text</label>
+                        <textarea
+                            className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/5 focus:border-accent transition-all text-xs font-medium text-white outline-none min-h-[80px] resize-none"
+                            placeholder="Enter text..."
+                            value={hf.text || ''}
+                            onChange={(e) => update({ text: e.target.value })}
+                        />
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <div className="flex-1">
+                            <label className="text-[10px] font-bold text-text-secondary uppercase tracking-wider block mb-2">Text Color</label>
+                            <div className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-white/5 border border-white/5">
+                                <input
+                                    type="color"
+                                    className="w-6 h-6 rounded-lg bg-transparent border-none cursor-pointer"
+                                    value={hf.text_color || '#FFFFFF'}
+                                    onChange={(e) => update({ text_color: e.target.value })}
+                                />
+                                <span className="text-[10px] font-mono font-bold text-white uppercase tracking-widest">{hf.text_color || '#FFFFFF'}</span>
+                            </div>
+                        </div>
+                        <div>
+                             <label className="text-[10px] font-bold text-text-secondary uppercase tracking-wider block mb-2">Size</label>
+                             <input
+                                type="number"
+                                className="w-20 px-4 py-3 rounded-2xl bg-white/5 border border-white/5 focus:border-accent transition-all text-xs font-bold text-white outline-none"
+                                value={hf.font_size || 48}
+                                onChange={(e) => update({ font_size: parseInt(e.target.value) || 48 })}
+                            />
+                        </div>
+                    </div>
+                </div>
+            </section>
           </div>
-        </div>
+        )}
 
-        {/* Type & Duration row */}
-        <div className="flex gap-3 mb-3">
-          <div className="flex-1">
-            <label className="text-[10px] font-medium uppercase tracking-wider block mb-1" style={{ color: 'var(--text-secondary)' }}>
-              Typ
-            </label>
-            <input
-              className="w-full px-2 py-1.5 rounded text-xs"
-              style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)' }}
-              value={hf.type}
-              onChange={(e) => update({ type: e.target.value })}
-            />
+        {activeTab === 'transform' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <div className="space-y-6">
+                <h4 className="text-[11px] font-black text-accent uppercase tracking-widest border-b border-accent/20 pb-2">Start State</h4>
+                <div className="grid grid-cols-2 gap-3">
+                    <SliderField label="X Pos" value={hf.start.x} min={-500} max={500} step={1} onChange={(v) => updateState('start', 'x', v)} />
+                    <SliderField label="Y Pos" value={hf.start.y} min={-500} max={500} step={1} onChange={(v) => updateState('start', 'y', v)} />
+                    <SliderField label="Scale" value={hf.start.scale} min={0.1} max={5} step={0.01} onChange={(v) => updateState('start', 'scale', v)} />
+                    <SliderField label="Rotation" value={hf.start.rotation} min={-180} max={180} step={1} onChange={(v) => updateState('start', 'rotation', v)} />
+                    <SliderField label="Opacity" value={hf.start.opacity} min={0} max={1} step={0.01} onChange={(v) => updateState('start', 'opacity', v)} />
+                    <SliderField label="Blur" value={hf.start.blur} min={0} max={50} step={0.5} onChange={(v) => updateState('start', 'blur', v)} />
+                </div>
+            </div>
+
+            <div className="space-y-6">
+                <h4 className="text-[11px] font-black text-accent-hover uppercase tracking-widest border-b border-accent/20 pb-2">End State</h4>
+                <div className="grid grid-cols-2 gap-3">
+                    <SliderField label="X Pos" value={hf.end.x} min={-500} max={500} step={1} onChange={(v) => updateState('end', 'x', v)} />
+                    <SliderField label="Y Pos" value={hf.end.y} min={-500} max={500} step={1} onChange={(v) => updateState('end', 'y', v)} />
+                    <SliderField label="Scale" value={hf.end.scale} min={0.1} max={5} step={0.01} onChange={(v) => updateState('end', 'scale', v)} />
+                    <SliderField label="Rotation" value={hf.end.rotation} min={-180} max={180} step={1} onChange={(v) => updateState('end', 'rotation', v)} />
+                    <SliderField label="Opacity" value={hf.end.opacity} min={0} max={1} step={0.01} onChange={(v) => updateState('end', 'opacity', v)} />
+                    <SliderField label="Blur" value={hf.end.blur} min={0} max={50} step={0.5} onChange={(v) => updateState('end', 'blur', v)} />
+                </div>
+            </div>
           </div>
-          <div className="flex-1">
-            <label className="text-[10px] font-medium uppercase tracking-wider block mb-1" style={{ color: 'var(--text-secondary)' }}>
-              Duration (s)
-            </label>
-            <input
-              type="number"
-              min={0.1}
-              max={10}
-              step={0.1}
-              className="w-full px-2 py-1.5 rounded text-xs"
-              style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)' }}
-              value={hf.duration}
-              onChange={(e) => update({ duration: Math.max(0.1, parseFloat(e.target.value) || 0.1) })}
-            />
+        )}
+
+        {activeTab === 'effects' && (
+          <div className="max-w-xl space-y-8">
+             <div>
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-wider block mb-4">Visual Effect Engine</label>
+                <div className="grid grid-cols-3 gap-3">
+                    {['none', 'morph', 'glitch', 'blur', 'zoom-blur', 'shake', 'fade', 'crossfade'].map(fx => (
+                        <button
+                            key={fx}
+                            onClick={() => update({ effect: fx as any })}
+                            className={`px-4 py-3 rounded-2xl border text-[10px] font-black uppercase tracking-widest transition-all ${
+                                hf.effect === fx 
+                                    ? 'bg-accent border-accent text-white shadow-lg shadow-accent/20' 
+                                    : 'bg-white/5 border-white/5 text-text-secondary hover:border-white/20 hover:text-white'
+                            }`}
+                        >
+                            {fx}
+                        </button>
+                    ))}
+                </div>
+             </div>
+             
+             <div className="glass-panel p-6 rounded-[2rem] border-accent/20">
+                <div className="flex items-center gap-4 mb-4">
+                    <div className="w-12 h-12 rounded-2xl bg-accent/20 flex items-center justify-center text-xl text-accent">
+                        ✨
+                    </div>
+                    <div>
+                        <h5 className="text-sm font-bold text-white">Advanced Post-Processing</h5>
+                        <p className="text-[10px] text-text-secondary uppercase tracking-widest font-bold mt-1">Status: Optimized for Mobile</p>
+                    </div>
+                </div>
+                <p className="text-xs text-text-secondary leading-relaxed">
+                    Die Hyperframe Engine nutzt Hardware-Beschleunigung für flüssige Effekte. Effekte werden Frame für Frame berechnet und in Echtzeit interpoliert.
+                </p>
+             </div>
           </div>
-        </div>
+        )}
 
-        {/* Easing selector */}
-        <div className="mb-3">
-          <label className="text-[10px] font-medium uppercase tracking-wider block mb-1" style={{ color: 'var(--text-secondary)' }}>
-            Easing
-          </label>
-          <select
-            className="w-full px-2 py-1.5 rounded text-xs"
-            style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)' }}
-            value={hf.easing}
-            onChange={(e) => update({ easing: e.target.value })}
-          >
-            <option value="linear">Linear</option>
-            <option value="ease-in">Ease In</option>
-            <option value="ease-out">Ease Out</option>
-            <option value="ease-in-out">Ease In Out</option>
-            <option value="bounce">Bounce</option>
-            <option value="elastic">Elastic</option>
-          </select>
-        </div>
-
-        {/* Effect selector */}
-        <div className="mb-3">
-          <label className="text-[10px] font-medium uppercase tracking-wider block mb-1" style={{ color: 'var(--text-secondary)' }}>
-            Effect
-          </label>
-          <select
-            className="w-full px-2 py-1.5 rounded text-xs"
-            style={{ backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)' }}
-            value={hf.effect}
-            onChange={(e) => update({ effect: e.target.value })}
-          >
-            <option value="none">None</option>
-            <option value="morph">Morph</option>
-            <option value="glitch">Glitch</option>
-            <option value="blur">Blur</option>
-            <option value="zoom-blur">Zoom Blur</option>
-            <option value="shake">Shake</option>
-            <option value="fade">Fade</option>
-            <option value="crossfade">Crossfade</option>
-          </select>
-        </div>
-
-        {/* Keyframe State Editors */}
-        <FrameStateEditor label="Start State" state={hf.start} onChange={(s) => update({ start: s })} />
-        <FrameStateEditor label="End State" state={hf.end} onChange={(s) => update({ end: s })} />
-
-        {/* Code View */}
-        {isCodeView && (
-          <div className="mt-2">
-            <label className="text-[10px] font-medium uppercase tracking-wider block mb-1" style={{ color: 'var(--text-secondary)' }}>
-              Raw JSON
-            </label>
-            <pre
-              className="text-[10px] p-2 rounded overflow-auto max-h-40"
-              style={{
-                backgroundColor: 'var(--bg-tertiary)',
-                color: 'var(--text-secondary)',
-                border: '1px solid var(--border-color)',
-                fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-              }}
-            >
-              {JSON.stringify({ ...hf, start: hf.start, end: hf.end }, null, 2)}
+        {activeTab === 'code' && (
+          <div className="h-full">
+            <pre className="p-6 rounded-[2rem] bg-black/40 border border-white/5 text-[10px] font-mono text-accent-hover overflow-auto h-full shadow-inner">
+              {JSON.stringify(hf, null, 2)}
             </pre>
           </div>
         )}

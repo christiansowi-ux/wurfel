@@ -34,6 +34,7 @@ SMOOTH_ZOOM = _register(MotionTemplate(
     description="Langsamer, flüssiger Zoom-In-Effekt. Perfekt für Produkt-Highlights und Intros.",
     category="zoom",
     tags=["zoom", "smooth", "slow", "cinematic", "intro"],
+    thumbnail_url="/thumbnails/smooth-zoom.png",
     default_frames=[
         HyperFrame(
             id="zoom-in",
@@ -53,6 +54,7 @@ GLIDE_TRANSITION = _register(MotionTemplate(
     description="Seitlicher Gleit-Übergang mit sanftem Ein- und Ausschwingen.",
     category="transition",
     tags=["glide", "slide", "transition", "smooth"],
+    thumbnail_url="/thumbnails/glide-transition.png",
     default_frames=[
         HyperFrame(
             id="glide",
@@ -72,6 +74,7 @@ MORPH = _register(MotionTemplate(
     description="Weicher Form-Wechsel zwischen zwei Elementen mit Überblendung.",
     category="morph",
     tags=["morph", "blend", "shape", "transform"],
+    thumbnail_url="/thumbnails/morph.png",
     default_frames=[
         HyperFrame(
             id="morph-main",
@@ -91,6 +94,7 @@ BOUNCE = _register(MotionTemplate(
     description="Federnder Bounce-Effekt mit elastischem Overshoot.",
     category="bounce",
     tags=["bounce", "spring", "elastic", "playful"],
+    thumbnail_url="/thumbnails/bounce.png",
     default_frames=[
         HyperFrame(
             id="bounce-in",
@@ -110,6 +114,7 @@ GLITCH = _register(MotionTemplate(
     description="Digitaler Glitch-Effekt mit Störungen und Versatz. Für Gaming- & Tech-Content.",
     category="glitch",
     tags=["glitch", "digital", "cyber", "tech", "distort"],
+    thumbnail_url="/thumbnails/glitch.png",
     default_frames=[
         HyperFrame(
             id="glitch-1",
@@ -147,6 +152,7 @@ FADE_IN = _register(MotionTemplate(
     description="Klassisches Einblenden aus der Dunkelheit.",
     category="transition",
     tags=["fade", "appear", "classic", "simple"],
+    thumbnail_url="/thumbnails/fade-in.png",
     default_frames=[
         HyperFrame(
             id="fade",
@@ -166,6 +172,7 @@ SHAKE = _register(MotionTemplate(
     description="Schnelle Rüttel-Bewegung für Emphasis und dynamische Momente.",
     category="effect",
     tags=["shake", "impact", "emphasis", "dynamic"],
+    thumbnail_url="/thumbnails/shake.png",
     default_frames=[
         HyperFrame(
             id="shake-1",
@@ -212,6 +219,7 @@ TEXT_SLIDE_UP = _register(MotionTemplate(
     description="Text-Overlay gleitet flüssig von unten herein. Ideal für Captions und Titles.",
     category="text",
     tags=["text", "slide", "caption", "title", "overlay"],
+    thumbnail_url="/thumbnails/text-slide-up.png",
     default_frames=[
         HyperFrame(
             id="text-appear",
@@ -231,6 +239,7 @@ WARP_ZOOM = _register(MotionTemplate(
     description="Zoom mit leichter Verzerrung und Blur – surrealer Effekt für Träume/Flashbacks.",
     category="zoom",
     tags=["warp", "zoom", "blur", "surreal", "dream"],
+    thumbnail_url="/thumbnails/warp-zoom.png",
     default_frames=[
         HyperFrame(
             id="warp",
@@ -250,6 +259,7 @@ SMOOTH_PAN = _register(MotionTemplate(
     description="Langsame horizontale Kamerafahrt. Perfekt für Panoramen und Landschaften.",
     category="transition",
     tags=["pan", "horizontal", "cinematic", "landscape"],
+    thumbnail_url="/thumbnails/smooth-pan.png",
     default_frames=[
         HyperFrame(
             id="pan",

@@ -36,6 +36,7 @@ function DraggableFrameCard({
   onDragOver,
   onDragEnd,
   onDrop,
+  isDragOver,
 }: {
   hf: { id: string; label: string; duration: number; type: string; effect: string; easing: string };
   index: number;
@@ -47,6 +48,7 @@ function DraggableFrameCard({
   onDragOver: (e: React.DragEvent, index: number) => void;
   onDragEnd: () => void;
   onDrop: (index: number) => void;
+  isDragOver: boolean;
 }) {
   return (
     <div
@@ -56,110 +58,76 @@ function DraggableFrameCard({
       onDragEnd={onDragEnd}
       onDrop={() => onDrop(index)}
       onClick={onSelect}
-      className="group relative flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-150 cursor-grab active:cursor-grabbing select-none w-40"
-      style={{
-        backgroundColor: isSelected ? 'rgba(108, 92, 231, 0.12)' : 'var(--bg-tertiary)',
-        border: `1px solid ${
-          isSelected ? 'var(--accent)' : 'var(--border-color)'
-        }`,
-      }}
-      onMouseEnter={(e) => {
-        if (!isSelected) {
-          e.currentTarget.style.borderColor = 'var(--accent)';
-          e.currentTarget.style.backgroundColor = 'rgba(108, 92, 231, 0.06)';
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!isSelected) {
-          e.currentTarget.style.borderColor = 'var(--border-color)';
-          e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)';
-        }
-      }}
+      className={`group relative flex flex-col items-center gap-3 p-5 rounded-3xl transition-all duration-300 cursor-grab active:cursor-grabbing select-none w-48 premium-card ${
+        isSelected ? 'ring-2 ring-accent border-transparent' : ''
+      } ${isDragOver ? 'translate-x-4' : ''}`}
     >
       {/* Drag handle indicator */}
-      <span
-        className="absolute top-1 left-1 text-[9px] opacity-0 group-hover:opacity-40 transition-opacity"
-        style={{ color: 'var(--text-secondary)' }}
-      >
+      <span className="absolute top-2 left-1/2 -translate-x-1/2 text-[10px] opacity-20 group-hover:opacity-60 transition-opacity">
         ⠿
       </span>
 
       {/* Frame number badge */}
-      <span
-        className="absolute top-2 left-2 text-xs font-mono px-1.5 py-0.5 rounded"
-        style={{
-          backgroundColor: 'var(--bg-primary)',
-          color: 'var(--text-secondary)',
-        }}
-      >
+      <span className="absolute top-4 left-4 text-[10px] font-black px-2 py-0.5 rounded-lg bg-black/40 text-white/50 backdrop-blur-md">
         #{index + 1}
       </span>
 
-      {/* Actions (top-right, visible on hover) */}
-      <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute top-2 right-2 flex gap-0.5">
+      {/* Actions (visible on hover) */}
+      <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute top-4 right-4 flex gap-1.5 z-10">
         <button
           onClick={(e) => { e.stopPropagation(); onDuplicate(); }}
-          className="text-[10px] px-1 py-0.5 rounded transition-all hover:scale-110"
-          style={{ color: 'var(--text-secondary)', backgroundColor: 'var(--bg-primary)' }}
+          className="w-7 h-7 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 transition-colors text-[10px]"
           title="Duplizieren"
         >
           📋
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(); }}
-          className="text-[10px] px-1 py-0.5 rounded transition-all hover:scale-110"
-          style={{ color: 'var(--danger)', backgroundColor: 'rgba(231, 76, 60, 0.1)' }}
+          className="w-7 h-7 rounded-full flex items-center justify-center bg-danger/20 hover:bg-danger/40 transition-colors text-danger text-xs"
           title="Löschen"
         >
           ✕
         </button>
       </div>
 
-      {/* Frame icon */}
+      {/* Frame Preview / Icon Area */}
       <div
-        className="w-12 h-12 rounded-xl flex items-center justify-center text-xl mt-3"
-        style={{
-          backgroundColor: isSelected
-            ? 'rgba(108, 92, 231, 0.2)'
-            : 'rgba(255,255,255,0.04)',
-        }}
+        className={`w-full aspect-[4/3] rounded-2xl flex items-center justify-center text-3xl mt-4 transition-all duration-500 shadow-inner ${
+          isSelected
+            ? 'bg-gradient-to-br from-accent/30 to-accent/10 scale-105'
+            : 'bg-black/20 group-hover:bg-white/5'
+        }`}
       >
-        {getFrameIcon(hf.type, hf.effect)}
+        <span className="group-hover:scale-125 transition-transform duration-500">
+          {getFrameIcon(hf.type, hf.effect)}
+        </span>
       </div>
 
       {/* Frame info */}
-      <div className="text-center">
-        <p
-          className="text-sm font-medium truncate max-w-[120px]"
-          style={{
-            color: isSelected ? 'var(--accent)' : 'var(--text-primary)',
-          }}
-        >
+      <div className="w-full text-center">
+        <p className={`text-xs font-bold truncate px-2 ${isSelected ? 'text-accent-hover' : 'text-white'}`}>
           {hf.label}
         </p>
-        <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
-          {hf.duration.toFixed(1)}s
-          {hf.effect !== 'none' && ` • ${hf.effect}`}
-        </p>
+        <div className="flex items-center justify-center gap-1.5 mt-2">
+            <span className="text-[9px] font-black uppercase tracking-widest text-text-secondary opacity-60">
+                {hf.duration.toFixed(1)}s
+            </span>
+            <span className="w-1 h-1 rounded-full bg-text-secondary/20" />
+            <span className="text-[9px] font-bold text-accent uppercase tracking-wider">
+                {hf.easing}
+            </span>
+        </div>
       </div>
 
-      {/* Easing badge */}
-      <span
-        className="text-[9px] px-1.5 py-0.5 rounded-full"
-        style={{
-          backgroundColor: isSelected ? 'rgba(108, 92, 231, 0.1)' : 'var(--bg-primary)',
-          color: 'var(--text-secondary)',
-        }}
-      >
-        {hf.easing}
-      </span>
+      {/* Effect badge if any */}
+      {hf.effect !== 'none' && (
+        <span className="absolute bottom-16 right-4 text-[8px] font-bold px-1.5 py-0.5 rounded-md bg-accent text-white shadow-lg">
+            {hf.effect.toUpperCase()}
+        </span>
+      )}
     </div>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Timeline component
-// ---------------------------------------------------------------------------
 
 export default function Timeline() {
   const {
@@ -178,7 +146,7 @@ export default function Timeline() {
 
   const activeProject = projects.find((p) => p.id === activeProjectId);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
-  const dragOverIndex = useRef<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
   // Drag & Drop handlers
   const handleDragStart = useCallback((index: number) => {
@@ -187,13 +155,13 @@ export default function Timeline() {
 
   const handleDragOver = useCallback((e: React.DragEvent, index: number) => {
     e.preventDefault();
-    dragOverIndex.current = index;
+    setDragOverIdx(index);
     e.dataTransfer.dropEffect = 'move';
   }, []);
 
   const handleDragEnd = useCallback(() => {
     setDragIndex(null);
-    dragOverIndex.current = null;
+    setDragOverIdx(null);
   }, []);
 
   const handleDrop = useCallback(
@@ -202,7 +170,7 @@ export default function Timeline() {
         reorderHyperframes(activeProject.id, dragIndex, dropIndex);
       }
       setDragIndex(null);
-      dragOverIndex.current = null;
+      setDragOverIdx(null);
     },
     [dragIndex, activeProject, reorderHyperframes],
   );
@@ -216,7 +184,7 @@ export default function Timeline() {
       label: `Frame ${activeProject.hyperframes.length + 1}`,
       duration: 1.0,
       easing: 'ease-in-out',
-      effect: 'none',
+      effect: 'none' as const,
       start: { x: 0, y: 0, scale: 1.0, rotation: 0, opacity: 1.0, color: null, blur: 0 },
       end: { x: 100, y: 50, scale: 1.5, rotation: 15, opacity: 1.0, color: null, blur: 0 },
     };
@@ -228,17 +196,14 @@ export default function Timeline() {
   if (!activeProject) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <div className="text-center max-w-md">
-          <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-4"
-            style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}
-          >
+        <div className="text-center max-w-md glass-panel p-10 rounded-[2rem]">
+          <div className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl mx-auto mb-6 bg-white/5">
             📁
           </div>
-          <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
+          <h3 className="text-xl font-bold mb-3 text-white">
             Kein Projekt ausgewählt
           </h3>
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+          <p className="text-sm text-text-secondary">
             Wähle ein Projekt aus oder erstelle ein neues, um mit der Bearbeitung zu beginnen
           </p>
         </div>
@@ -249,102 +214,86 @@ export default function Timeline() {
   return (
     <div className="flex-1 flex flex-col">
       {/* Toolbar */}
-      <div
-        className="flex items-center justify-between px-6 py-3 border-b"
-        style={{ borderColor: 'var(--border-color)' }}
-      >
-        <div className="flex items-center gap-3">
-          <h2 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
-            {activeProject.name}
-          </h2>
-          <span
-            className="text-xs px-2 py-0.5 rounded-full"
-            style={{
-              backgroundColor: 'rgba(108, 92, 231, 0.15)',
-              color: 'var(--accent)',
-            }}
-          >
-            {activeProject.hyperframes.length} Frames
-          </span>
-          <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-            {activeProject.hyperframes.reduce((acc, hf) => acc + hf.duration, 0).toFixed(1)}s
-          </span>
+      <div className="flex items-center justify-between px-8 py-5 border-b border-white/5">
+        <div className="flex items-center gap-4">
+          <div>
+            <h2 className="text-xl font-black text-white">
+                {activeProject.name}
+            </h2>
+            <div className="flex items-center gap-3 mt-1">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-accent/20 text-accent uppercase tracking-wider">
+                    {activeProject.hyperframes.length} Hyperframes
+                </span>
+                <span className="text-[10px] font-bold text-text-secondary opacity-50 uppercase tracking-widest">
+                    {activeProject.hyperframes.reduce((acc, hf) => acc + hf.duration, 0).toFixed(1)}s Gesamt
+                </span>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+        
+        <div className="flex items-center gap-3">
           {/* Code view toggle */}
           <button
             onClick={toggleCodeView}
-            className="px-3 py-1.5 text-xs font-medium rounded-lg transition-all"
-            style={{
-              backgroundColor: isCodeView ? 'var(--accent)' : 'var(--bg-tertiary)',
-              color: isCodeView ? '#fff' : 'var(--text-secondary)',
-              border: `1px solid ${isCodeView ? 'var(--accent)' : 'var(--border-color)'}`,
-            }}
+            className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all border ${
+              isCodeView 
+                ? 'bg-accent border-accent text-white shadow-lg shadow-accent/20' 
+                : 'bg-white/5 border-white/10 text-text-secondary hover:text-white'
+            }`}
           >
-            {'</>'} JSON
+            JSON Source
           </button>
           {/* Add frame */}
           <button
             onClick={handleAddFrame}
-            className="px-3 py-1.5 text-xs font-medium rounded-lg transition-all"
-            style={{
-              backgroundColor: 'var(--accent)',
-              color: '#fff',
-              border: 'none',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--accent-hover)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--accent)';
-            }}
+            className="premium-button px-5 py-2 text-xs font-bold text-white rounded-xl flex items-center gap-2"
           >
-            + Frame
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
+            </svg>
+            Add Frame
           </button>
         </div>
       </div>
 
       {/* Project Selector */}
-      <div className="px-6 py-3 flex gap-2 flex-wrap border-b" style={{ borderColor: 'var(--border-color)' }}>
+      <div className="px-8 py-4 flex gap-3 flex-wrap border-b border-white/5 bg-black/10">
         {projects.map((project) => (
           <button
             key={project.id}
             onClick={() => setActiveProject(project.id)}
-            className="px-3 py-1.5 text-xs font-medium rounded-lg transition-all"
-            style={{
-              backgroundColor: project.id === activeProjectId ? 'var(--accent)' : 'var(--bg-tertiary)',
-              color: project.id === activeProjectId ? '#fff' : 'var(--text-secondary)',
-              border: `1px solid ${project.id === activeProjectId ? 'var(--accent)' : 'var(--border-color)'}`,
-            }}
+            className={`px-4 py-2 text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all ${
+              project.id === activeProjectId 
+                ? 'bg-white/10 text-white shadow-xl ring-1 ring-white/20' 
+                : 'text-text-secondary hover:text-white hover:bg-white/5'
+            }`}
           >
             {project.name}
-            <span className="ml-1.5 opacity-70">({project.updatedAt.slice(0, 10)})</span>
           </button>
         ))}
       </div>
 
       {/* Timeline Frames */}
-      <div className="flex-1 overflow-y-auto px-6 py-4">
+      <div className="flex-1 overflow-x-auto px-8 py-8">
         {activeProject.hyperframes.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
-            <p className="text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-sm text-text-secondary mb-6">
               Noch keine Hyperframes in diesem Projekt
             </p>
             <button
               onClick={handleAddFrame}
-              className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
-              style={{ backgroundColor: 'var(--accent)', color: '#fff' }}
+              className="premium-button px-8 py-3 rounded-2xl text-sm font-bold text-white"
             >
               Ersten Frame hinzufügen
             </button>
           </div>
         ) : (
-          <div className="flex gap-3 flex-wrap">
+          <div className="flex gap-6 pb-4">
             {activeProject.hyperframes.map((hf, index) => (
               <div
                 key={hf.id}
-                className={`transition-opacity duration-150 ${
-                  dragIndex === index ? 'opacity-40' : 'opacity-100'
+                className={`transition-all duration-300 ${
+                  dragIndex === index ? 'opacity-20 scale-90' : 'opacity-100'
                 }`}
               >
                 <DraggableFrameCard
@@ -358,9 +307,23 @@ export default function Timeline() {
                   onDragOver={handleDragOver}
                   onDragEnd={handleDragEnd}
                   onDrop={handleDrop}
+                  isDragOver={dragOverIdx === index}
                 />
               </div>
             ))}
+            
+            {/* Quick Add Button at end of timeline */}
+            <button 
+                onClick={handleAddFrame}
+                className="w-16 h-full flex flex-col items-center justify-center gap-2 rounded-[2rem] border-2 border-dashed border-white/10 hover:border-accent/40 hover:bg-accent/5 transition-all text-text-secondary hover:text-accent group shrink-0 min-h-[220px]"
+            >
+                <div className="w-10 h-10 rounded-full border-2 border-current flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
+                    </svg>
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-widest vertical-text">Add</span>
+            </button>
           </div>
         )}
       </div>
